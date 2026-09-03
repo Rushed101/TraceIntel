@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TraceIntel — Open Source Intelligence Platform</title>
+  <style>
+    :root {
+      --bg: #07070a;
+      --bg-card: #0e0e12;
+      --bg-elevated: #14141a;
+      --border: rgba(255, 255, 255, 0.07);
+      --border-hover: rgba(255, 255, 255, 0.14);
+      --text: #f0f0f2;
+      --text-muted: #8b8b96;
+      --text-dim: #55555f;
+      --accent: #6c8cff;
+      --accent-soft: rgba(108, 140, 255, 0.12);
+      --success: #4ade80;
+      --radius-full: 9999px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    .bg-glow {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 50% -10%, rgba(108,140,255,0.08), transparent),
+        radial-gradient(circle at 85% 60%, rgba(108,140,255,0.03), transparent 40%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      background: rgba(7, 7, 10, 0.8);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.03em;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--accent), #9b6cff);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-icon svg { width: 16px; height: 16px; }
+
+    .nav-links { display: flex; gap: 6px; }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 50px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 1px solid rgba(108,140,255,0.2);
+      border-radius: var(--radius-full);
+      margin-bottom: 28px;
+    }
+    .badge .dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    h1 {
+      font-size: clamp(2.4rem, 5.5vw, 3.6rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.12;
+      margin-bottom: 18px;
+      max-width: 700px;
+    }
+    h1 span {
+      background: linear-gradient(135deg, var(--accent), #b08cff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      color: var(--text-muted);
+      font-size: 16px;
+      max-width: 480px;
+      margin-bottom: 40px;
+      line-height: 1.65;
+    }
+
+    .type-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 16px;
+      max-width: 620px;
+    }
+    .type-btn {
+      padding: 7px 14px;
+      font-size: 12.5px;
+      font-weight: 500;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .type-btn:hover { border-color: var(--border-hover); color: var(--text); }
+    .type-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: rgba(108,140,255,0.3);
+    }
+
+    .search-container { width: 100%; max-width: 600px; margin-bottom: 18px; }
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 5px 5px 5px 18px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-box:focus-within {
+      border-color: rgba(108,140,255,0.4);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 15px;
+      padding: 12px 10px;
+    }
+    .search-box input::placeholder { color: var(--text-dim); }
+
+    .btn-search {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-search:hover { background: #5a7aef; transform: translateY(-1px); }
+    .btn-search:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .options-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 28px;
+      max-width: 600px;
+    }
+    .option-group {
+      display: flex;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 3px;
+    }
+    .option-btn {
+      padding: 7px 14px;
+      font-size: 12.5px;
+      font-weight: 500;
+      border-radius: var(--radius-full);
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .option-btn.active { background: rgba(255,255,255,0.08); color: var(--text); }
+    .option-btn:hover:not(.active) { color: var(--text); }
+
+    .tool-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 13px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .tool-btn:hover, .tool-btn.active {
+      border-color: rgba(108,140,255,0.3);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .stats-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .stat-item { text-align: center; }
+    .stat-item .num { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+    .stat-item .lbl { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+    .results-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 740px;
+      margin: 0 auto 60px;
+      padding: 0 24px;
+      display: none;
+    }
+    .results-wrap.visible { display: block; }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .results-header h2 { font-size: 16px; font-weight: 600; }
+    .results-meta { font-size: 12.5px; color: var(--text-muted); }
+
+    .result-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+      text-align: left;
+      animation: fadeUp 0.3s ease;
+    }
+    .result-card:hover { border-color: var(--border-hover); }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .result-source {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .result-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      background: rgba(74,222,128,0.1);
+      color: var(--success);
+      font-weight: 500;
+    }
+    .result-title {
+      font-size: 14.5px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+    .result-data {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+    .result-data code {
+      color: var(--text);
+      font-family: 'SF Mono', ui-monospace, monospace;
+      font-size: 12.5px;
+      background: rgba(255,255,255,0.04);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .loading-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+    .spinner {
+      width: 26px; height: 26px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    section {
+      position: relative;
+      z-index: 1;
+      padding: 70px 24px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: clamp(1.5rem, 3.5vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 15px;
+      max-width: 500px;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      transition: all 0.2s;
+    }
+    .card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+    .card-icon {
+      width: 36px; height: 36px;
+      background: var(--accent-soft);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      font-size: 16px;
+    }
+    .card h3 { font-size: 14.5px; font-weight: 600; margin-bottom: 6px; }
+    .card p { color: var(--text-muted); font-size: 13px; line-height: 1.55; }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 12.5px;
+    }
+
+    @media (max-width: 640px) {
+      nav { padding: 12px 16px; }
+      .nav-links { display: none; }
+      h1 { font-size: 1.9rem; }
+      .search-box { flex-direction: column; border-radius: 14px; padding: 12px; gap: 10px; }
+      .search-box input { padding: 8px; text-align: center; }
+      .btn-search { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <nav>
+    <a href="#" class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+          <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+        </svg>
+      </div>
+      TraceIntel
+    </a>
+    <div class="nav-links">
+      <a href="#home">Search</a>
+      <a href="#capabilities">Capabilities</a>
+      <a href="#about">About</a>
+    </div>
+  </nav>
+
+  <section class="hero" id="home">
+    <div class="badge">
+      <span class="dot"></span>
+      Live intelligence engine
+    </div>
+
+    <h1>Lookup any digital<br>footprint <span>instantly</span></h1>
+
+    <p class="hero-sub">
+      Cross-source OSINT search for emails, usernames, phone numbers, IPs and more.
+      Built for researchers and security professionals.
+    </p>
+
+    <div class="type-row" id="typeSelector">
+      <button class="type-btn active" data-type="email">Email</button>
+      <button class="type-btn" data-type="username">Username</button>
+      <button class="type-btn" data-type="phone">Phone</button>
+      <button class="type-btn" data-type="ip">IP Address</button>
+      <button class="type-btn" data-type="discord">Discord</button>
+      <button class="type-btn" data-type="domain">Domain</button>
+    </div>
+
+    <div class="search-container">
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-dim); flex-shrink: 0;">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Enter email address..." autocomplete="off" spellcheck="false">
+        <button class="btn-search" id="searchBtn">
+          <span>Search</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="options-row">
+      <div class="option-group">
+        <button class="option-btn active" data-mode="deep">Deep</button>
+        <button class="option-btn" data-mode="quick">Quick</button>
+      </div>
+      <button class="tool-btn active" data-tool="multi" id="multiBtn">Multi-source</button>
+      <button class="tool-btn" data-tool="bulk" id="bulkBtn">Bulk lookup</button>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-item"><div class="num">740B+</div><div class="lbl">Records</div></div>
+      <div class="stat-item"><div class="num">72</div><div class="lbl">Sources</div></div>
+      <div class="stat-item"><div class="num">&lt;1s</div><div class="lbl">Avg. response</div></div>
+      <div class="stat-item"><div class="num">160+</div><div class="lbl">Countries</div></div>
+    </div>
+  </section>
+
+  <div class="results-wrap" id="resultsSection">
+    <div class="results-header">
+      <h2 id="resultsTitle">Results</h2>
+      <div class="results-meta" id="resultsMeta"></div>
+    </div>
+    <div id="resultsContainer"></div>
+  </div>
+
+  <section id="capabilities">
+    <div class="section-label">Capabilities</div>
+    <h2 class="section-title">What you can investigate</h2>
+    <p class="section-desc">Query multiple data categories from a single interface. Results are aggregated and ranked by relevance.</p>
+    <div class="cards-grid">
+      <div class="card"><div class="card-icon">📧</div><h3>Email & Credentials</h3><p>Check exposure across breach databases, paste sites and stealer logs.</p></div>
+      <div class="card"><div class="card-icon">👤</div><h3>Username & Profiles</h3><p>Find accounts linked to a username across social, gaming and developer platforms.</p></div>
+      <div class="card"><div class="card-icon">📱</div><h3>Phone Intelligence</h3><p>Carrier, region, line type and associated digital identities.</p></div>
+      <div class="card"><div class="card-icon">🌐</div><h3>IP & Network</h3><p>Geolocation, ASN, threat reputation and historical DNS data.</p></div>
+      <div class="card"><div class="card-icon">💬</div><h3>Discord & Social</h3><p>Resolve Discord IDs, linked accounts and community activity signals.</p></div>
+      <div class="card"><div class="card-icon">🔗</div><h3>Domain & Web</h3><p>WHOIS, subdomains, related infrastructure and exposure checks.</p></div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="section-label">About</div>
+    <h2 class="section-title">Built for serious research</h2>
+    <p class="section-desc">TraceIntel aggregates public and commercial intelligence sources into one fast interface. Designed for security researchers, investigators and privacy-conscious professionals.</p>
+    <div class="cards-grid">
+      <div class="card"><div class="card-icon">⚡</div><h3>Parallel queries</h3><p>Multiple sources are queried simultaneously for sub-second aggregate results.</p></div>
+      <div class="card"><div class="card-icon">🔒</div><h3>No account required</h3><p>Start searching immediately. No registration, no tracking of your queries.</p></div>
+      <div class="card"><div class="card-icon">🧩</div><h3>Extensible</h3><p>Clean API layer ready for custom source connectors and private data feeds.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>TraceIntel · Open Source Intelligence Platform</p>
+    <p style="margin-top:6px">For research and defensive security purposes only.</p>
+  </footer>
+
+  <script>
+    /* ============================================================
+       CONFIG — easy to extend later with real APIs
+       ============================================================ */
+    const CONFIG = {
+      useRealApi: false,          // ← set true when backend is ready
+      apiBase: '/api/v1',
+
+      placeholders: {
+        email:    'Enter email address...',
+        username: 'Enter username...',
+        phone:    'Enter phone number...',
+        ip:       'Enter IP address...',
+        discord:  'Enter Discord ID or username...',
+        domain:   'Enter domain name...'
+      },
+
+      sources: {
+        email:    ['BreachDirectory', 'LeakCheck', 'Snusbase', 'IntelX', 'HudsonRock'],
+        username: ['Sherlock', 'WhatsMyName', 'Maigret', 'Holehe', 'Social Analyzer'],
+        phone:    ['Truecaller', 'PhoneInfoga', 'INF0SEC', 'LeakOSINT'],
+        ip:       ['AbuseIPDB', 'Shodan', 'IPInfo', 'GreyNoise', 'SecurityTrails'],
+        discord:  ['Discord Lookup', 'Oathnet', 'IntelVault'],
+        domain:   ['WHOIS', 'SecurityTrails', 'ViewDNS', 'crt.sh']
+      }
+    };
+
+    let currentType = 'email';
+    let currentMode = 'deep';
+    let multiSource = true;
+    let bulkMode = false;
+
+    const searchInput      = document.getElementById('searchInput');
+    const searchBtn        = document.getElementById('searchBtn');
+    const resultsSection   = document.getElementById('resultsSection');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const resultsMeta      = document.getElementById('resultsMeta');
+    const resultsTitle     = document.getElementById('resultsTitle');
+
+    // Type selector
+    document.querySelectorAll('.type-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentType = btn.dataset.type;
+        searchInput.placeholder = CONFIG.placeholders[currentType] || 'Search...';
+        searchInput.focus();
+      });
+    });
+
+    // Mode
+    document.querySelectorAll('.option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+      });
+    });
+
+    // Tools
+    document.getElementById('multiBtn').addEventListener('click', function () {
+      multiSource = !multiSource;
+      this.classList.toggle('active', multiSource);
+    });
+
+    document.getElementById('bulkBtn').addEventListener('click', function () {
+      bulkMode = !bulkMode;
+      this.classList.toggle('active', bulkMode);
+      searchInput.placeholder = bulkMode
+        ? 'Enter multiple values (comma or newline separated)...'
+        : CONFIG.placeholders[currentType];
+    });
+
+    searchBtn.addEventListener('click', runSearch);
+    searchInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runSearch(); }
+    });
+
+    /* ---- SEARCH ---- */
+    async function runSearch() {
+      const query = searchInput.value.trim();
+      if (!query) { searchInput.focus(); return; }
+
+      setLoading(true);
+      resultsSection.classList.add('visible');
+      resultsTitle.textContent = 'Results for "' + truncate(query, 40) + '"';
+      resultsMeta.textContent = '';
+      resultsContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div>Querying sources for <strong>' + escapeHtml(query) + '</strong>...</div>';
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      const start = performance.now();
+
+      try {
+        let results;
+        if (CONFIG.useRealApi) {
+          results = await fetchRealResults(query, currentType, currentMode);
+        } else {
+          await delay(currentMode === 'deep' ? 900 : 400);
+          results = generateMockResults(query, currentType);
+        }
+        const elapsed = ((performance.now() - start) / 1000).toFixed(2);
+        renderResults(results, elapsed);
+      } catch (err) {
+        resultsContainer.innerHTML = '<div class="empty-state"><p>Something went wrong.</p><p style="margin-top:6px;font-size:13px;color:var(--text-dim)">' + escapeHtml(err.message) + '</p></div>';
+        resultsMeta.textContent = 'Error';
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    /* Real API stub — implement later */
+    async function fetchRealResults(query, type, mode) {
+      const res = await fetch(CONFIG.apiBase + '/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query, type: type, mode: mode, multi: multiSource })
+      });
+      if (!res.ok) throw new Error('API error ' + res.status);
+      const data = await res.json();
+      return data.results || [];
+    }
+
+    function generateMockResults(query, type) {
+      const srcList = CONFIG.sources[type] || CONFIG.sources.email;
+      const count = multiSource ? Math.floor(Math.random() * 3) + 3 : Math.floor(Math.random() * 2) + 1;
+      const results = [];
+      for (let i = 0; i < count; i++) {
+        results.push({
+          source: srcList[i % srcList.length],
+          title: query,
+          confidence: 60 + Math.floor(Math.random() * 35),
+          fields: buildMockFields(query, type, i)
+        });
+      }
+      return results;
+    }
+
+    function buildMockFields(query, type, idx) {
+      const platforms = ['GitHub','Twitter/X','Reddit','Instagram','Steam','LinkedIn','TikTok','Discord'];
+      const carriers  = ['Vodafone','Telekom','O2','Orange','T-Mobile'];
+      const cities    = ['Berlin, DE','Paris, FR','Amsterdam, NL','London, UK','Vienna, AT'];
+      const isps      = ['Deutsche Telekom','Cloudflare','Hetzner','OVH','AWS'];
+
+      switch (type) {
+        case 'email':
+          return [
+            { label: 'Hash', value: randomHex(32) },
+            { label: 'Breach', value: '202' + Math.floor(Math.random()*5) + '-' + String(Math.floor(Math.random()*12)+1).padStart(2,'0') },
+            { label: 'Exposed fields', value: ['email','password','ip','name'].slice(0, 2 + idx % 3).join(', ') }
+          ];
+        case 'username':
+          return [
+            { label: 'Platform', value: platforms[idx % platforms.length] },
+            { label: 'Profile', value: 'https://example.com/u/' + query },
+            { label: 'Last activity', value: (Math.floor(Math.random()*60)+1) + ' days ago' }
+          ];
+        case 'phone':
+          return [
+            { label: 'Carrier', value: carriers[idx % carriers.length] },
+            { label: 'Country', value: ['DE','FR','US','NL','AT'][idx % 5] },
+            { label: 'Line type', value: idx % 2 === 0 ? 'Mobile' : 'Landline' }
+          ];
+        case 'ip':
+          return [
+            { label: 'Location', value: cities[idx % cities.length] },
+            { label: 'ISP / ASN', value: isps[idx % isps.length] },
+            { label: 'Risk score', value: String(Math.floor(Math.random()*45)) }
+          ];
+        case 'discord':
+          return [
+            { label: 'Tag', value: query + '#' + String(Math.floor(Math.random()*9999)).padStart(4,'0') },
+            { label: 'Created', value: '202' + Math.floor(Math.random()*5) },
+            { label: 'Servers', value: String(Math.floor(Math.random()*80)+3) }
+          ];
+        case 'domain':
+          return [
+            { label: 'Registrar', value: ['Namecheap','GoDaddy','Cloudflare','OVH'][idx % 4] },
+            { label: 'Created', value: '201' + Math.floor(Math.random()*9) + '-' + String(Math.floor(Math.random()*12)+1).padStart(2,'0') + '-15' },
+            { label: 'Status', value: 'active' }
+          ];
+        default:
+          return [{ label: 'Info', value: 'Match found' }];
+      }
+    }
+
+    function renderResults(results, elapsed) {
+      if (!results.length) {
+        resultsContainer.innerHTML = '<div class="empty-state"><p>No results found</p><p style="margin-top:6px;font-size:13px">Try another query or search type.</p></div>';
+        resultsMeta.textContent = '0 results · ' + elapsed + 's';
+        return;
+      }
+      resultsMeta.textContent = results.length + ' result' + (results.length > 1 ? 's' : '') + ' · ' + elapsed + 's · ' + currentMode + ' mode';
+      resultsContainer.innerHTML = results.map(function(r, i) {
+        return '<div class="result-card" style="animation-delay:' + (i*0.05) + 's">' +
+          '<div class="result-top"><span class="result-source">' + escapeHtml(r.source) + '</span>' +
+          '<span class="result-badge">' + r.confidence + '% match</span></div>' +
+          '<div class="result-title">' + escapeHtml(r.title) + '</div>' +
+          '<div class="result-data">' +
+            r.fields.map(function(f) {
+              return '<div><strong style="color:var(--text-dim);font-weight:500">' + escapeHtml(f.label) + ':</strong> <code>' + escapeHtml(f.value) + '</code></div>';
+            }).join('') +
+          '</div></div>';
+      }).join('');
+    }
+
+    function setLoading(on) {
+      searchBtn.disabled = on;
+      searchBtn.querySelector('span').textContent = on ? 'Searching…' : 'Search';
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function truncate(str, n) { return str.length > n ? str.slice(0, n) + '…' : str; }
+    function randomHex(len) {
+      var c = '0123456789abcdef', s = '';
+      for (var i = 0; i < len; i++) s += c[Math.floor(Math.random()*16)];
+      return s;
+    }
+    function delay(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+    document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        var t = document.querySelector(a.getAttribute('href'));
+        if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  </script>
+</body>
+</html>
